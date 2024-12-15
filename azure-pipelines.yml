@@ -1,0 +1,19 @@
+pool:
+  vmImage: 'ubuntu-latest'
+
+jobs:
+  - job: Build
+    steps:
+      - task: Checkout@1
+      - task: Docker@2
+        inputs:
+          command: 'build'
+          repository: 'simplewebappmvc'
+          dockerfile: 'SimpleWebAppMVC/Dockerfile'
+          tags: '$(Build.BuildId)'
+
+  - job: Deploy
+    dependsOn: Build  # This ensures that the Deploy job will run after the Build job
+    steps:
+      - script: docker run --rm -d -p 5000:5000 --name simplewebappmvc-c simplewebappmvc:$(Build.BuildId)
+        displayName: 'Run Docker container'
