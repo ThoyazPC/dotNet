@@ -1,0 +1,64 @@
+DotNet Application
+-------------------------
+
+RG=DotNetRG
+echo "Creating Azure Resource Group"
+az group create --location eastus -n ${RG}
+ 
+echo "Creating Azure Virtual Network"
+az network vnet create -g ${RG} -n ${RG}-vNET1 --address-prefix 10.1.0.0/16 \
+--subnet-name ${RG}-Subnet-1 --subnet-prefix 10.1.1.0/24 -l eastus
+
+az network nsg create -g ${RG} -n ${RG}_NSG1 --location eastus
+az network nsg rule create -g ${RG} --nsg-name ${RG}_NSG1 -n ${RG}_NSG1_RULE1 --priority 100 \
+--source-address-prefixes '*' --source-port-ranges '*'     --destination-address-prefixes '*' \
+--destination-port-ranges '*' --access Allow     --protocol Tcp --description "Allowing All Traffic For Now"
+
+IMAGE='Canonical:0001-com-ubuntu-server-focal-daily:20_04-daily-lts-gen2:latest'
+az vm create -g ${RG} -n ADOAgentVM --image $IMAGE --vnet-name ${RG}-vNET1 \
+--subnet ${RG}-Subnet-1 --admin-username admintz --admin-password "India@123456" \
+--size Standard_B2ms --storage-sku StandardSSD_LRS --nsg ${RG}_NSG1
+
+
+Azure PAT : 
+
+LinuxAgentPool
+
+
+------
+1. Create an VM with above CMDS
+2. Install Docker and .Net using below cmds
+
+Install Docker
+-----------------
+curl https://get.docker.com | bash
+sudo usermod -aG docker $USER
+
+Install .Net
+---------------
+
+sudo apt update
+sudo apt install -y wget apt-transport-https
+
+wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+
+sudo apt update
+sudo apt install -y dotnet-sdk-8.0
+
+
+dotnet --version
+
+
+3. Adde agent pool on Project, After agent
+	Create PAT Token while adding VM as Agent
+	Add capabilities
+	Add DotNet -> Yes
+	
+4. Now run the pipeline
+
+-------------------
+Code is there in Azure DevOps Repo
+Run the Pipeline
+--------------------
+
